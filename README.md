@@ -4,6 +4,53 @@ Minimal reproduction of the mismatch between the public TypeScript API for
 `AudioPlayer.replace()` and its native Android and iOS signatures.
 
 <img width="389" height="861" alt="image" src="https://github.com/user-attachments/assets/e2f165dd-da70-42f1-a4b5-a0e3d4a08ba1" />
+<img width="377" height="822" alt="image" src="https://github.com/user-attachments/assets/88e4846b-aac8-42dd-9fe1-682e599f9984" />
+
+<details open>
+  <summary>Android stacktrace</summary>
+
+  ### Android
+
+  ```text
+ERROR  [Error: Call to function 'AudioPlayer.replace' has been rejected.
+→ Caused by: The 2nd argument cannot be cast to type class expo.modules.audio.AudioSource (received null)
+→ Caused by: Cannot assigned null to not nullable type.] 
+
+Code: index.tsx
+   9 |       <Pressable
+  10 |         accessibilityRole="button"
+> 11 |         onPress={() => player.replace(null)}
+     |                                      ^
+  12 |         style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}>
+  13 |         <Text style={styles.buttonText}>Call player.replace(null)</Text>
+  14 |       </Pressable>
+Call Stack
+  Pressable.props.onPress (src/app/index.tsx:11:38)
+  ```
+</details>
+
+<details open>
+  <summary>iOS stacktrace</summary>
+
+  ### iOS
+
+  ```text
+ERROR  [Error: FunctionCallException: Calling the 'replace' function has failed (at ExpoModulesCore/SyncFunctionDefinition.swift:94)
+→ Caused by: ArgumentCastException: The 1st argument cannot be cast to type AudioSource (at ExpoModulesCore/SyncFunctionDefinition.swift:166)
+→ Caused by: The operation couldn’t be completed. (ExpoModulesJSI.JavaScriptValue.TypeError error 1.)] 
+
+Code: index.tsx
+   9 |       <Pressable
+  10 |         accessibilityRole="button"
+> 11 |         onPress={() => player.replace(null)}
+     |                                      ^
+  12 |         style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}>
+  13 |         <Text style={styles.buttonText}>Call player.replace(null)</Text>
+  14 |       </Pressable>
+Call Stack
+  Pressable.props.onPress (src/app/index.tsx:11:38)
+  ```
+</details>
 
 ## Versions
 
@@ -24,33 +71,3 @@ Open the project in Expo Go or a development build on Android or iOS.
 
 1. Open the app.
 2. Press **Call player.replace(null)**.
-
-The single screen runs:
-
-```ts
-const player = useAudioPlayer(null);
-player.replace(null);
-```
-
-No type cast or TypeScript suppression is used.
-
-## Expected result
-
-The TypeScript and native contracts agree about whether `null` is accepted. Since
-the TypeScript `AudioSource` type includes `null`, calling `replace(null)` should
-either be supported consistently or rejected during type checking.
-
-## Actual result
-
-The project compiles, but Android and iOS reject `null` at the native bridge:
-
-```text
-Error: Call to function 'AudioPlayer.replace' has been rejected.
-→ Caused by: The 2nd argument cannot be cast to type expo.modules.audio.AudioSource (received null)
-→ Caused by: Cannot assigned null to not nullable type.
-```
-
-## Relevant history
-
-- [expo/expo#33854 — Accept null source in audio player](https://github.com/expo/expo/pull/33854)
-- [expo/expo#33708 — Fix issues with `replace` method](https://github.com/expo/expo/pull/33708)
